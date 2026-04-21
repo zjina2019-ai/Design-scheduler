@@ -421,7 +421,10 @@ function showSync(state, msg){
 
 // ── API 통신 ──
 async function apiGet(action){
-  const res=await fetch(`${API}?action=${action}`);
+  const res=await fetch(`${API}?action=${action}&t=${Date.now()}`, {
+    method:'GET',
+    redirect:'follow'
+  });
   return await res.json();
 }
 async function apiPost(action, data){
@@ -460,23 +463,26 @@ function rowsToNames(rows){
 // ── Load all ──
 async function loadAll(){
   showSync('saving','불러오는 중...');
+  const lo=document.getElementById('loadingOverlay');
   try{
-    const [tRows, nRows] = await Promise.all([
-      apiGet('getTasks'), apiGet('getNames')
-    ]);
+    const tRows = await apiGet('getTasks');
+    const nRows = await apiGet('getNames');
     tasks = rowsToTasks(tRows);
     names = rowsToNames(nRows);
     applyNames();
     renderCal();
     renderHeader();
     renderTasks();
-    showSync('ok','✓ 최신 데이터');
+    showSync('ok','✓ 최신 데이터 불러옴');
   } catch(e){
-    showSync('err','불러오기 실패 — 새로고침 버튼을 눌러주세요');
-    console.error(e);
+    showSync('err','불러오기 실패');
+    console.error('loadAll 오류:', e);
+    renderCal();
+    renderHeader();
+    renderTasks();
+  } finally {
+    if(lo){lo.classList.add('hidden');setTimeout(()=>{if(lo.parentNode)lo.parentNode.removeChild(lo);},500);}
   }
-  const lo=document.getElementById('loadingOverlay');
-  if(lo){lo.classList.add('hidden');setTimeout(()=>lo.remove(),500);}
 }
 
 // ── Save tasks ──
