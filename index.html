@@ -476,8 +476,8 @@ async function loadAll(){
     showSync('err','불러오기 실패 — 새로고침 버튼을 눌러주세요');
     console.error(e);
   }
-  document.getElementById('loadingOverlay').classList.add('hidden');
-  setTimeout(()=>document.getElementById('loadingOverlay').remove(),500);
+  const lo=document.getElementById('loadingOverlay');
+  if(lo){lo.classList.add('hidden');setTimeout(()=>lo.remove(),500);}
 }
 
 // ── Save tasks ──
