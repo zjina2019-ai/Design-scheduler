@@ -443,15 +443,27 @@ function tasksToRows(arr){
     t.note||'', JSON.stringify(t.comments||[])
   ]);
 }
+function cleanDate(v){
+  if(!v) return '';
+  const s = String(v);
+  // ISO 날짜면 YYYY-MM-DD 만 추출
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : s;
+}
 function rowsToTasks(rows){
   if(!rows||rows.length===0)return[];
   return rows.map(r=>({
-    id:String(r[0]),title:String(r[1]),designer:String(r[2]),status:String(r[3]),
-    dateType:String(r[4]||'single'),date:String(r[5]||''),
-    dateStart:String(r[6]||''),dateEnd:String(r[7]||''),
+    id:String(r[0]||''),
+    title:String(r[1]||''),
+    designer:String(r[2]||'a'),
+    status:String(r[3]||'p1'),
+    dateType:String(r[4]||'single'),
+    date:cleanDate(r[5]),
+    dateStart:cleanDate(r[6]),
+    dateEnd:cleanDate(r[7]),
     note:String(r[8]||''),
     comments:(() => { try{ return JSON.parse(r[9]||'[]'); }catch{return[];} })()
-  })).filter(t=>t.id&&t.id!=='undefined');
+  })).filter(t=>t.id&&t.id!=='undefined'&&t.id!=='');
 }
 // names → 2D array
 function namesToRows(n){ return [[n.a,n.b]]; }
