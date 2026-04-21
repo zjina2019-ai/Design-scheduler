@@ -387,7 +387,7 @@
 
 <script>
 // ── 구글 앱스 스크립트 URL ──
-const API = 'https://script.google.com/macros/s/AKfycbwLx45Iym0Us5vcPRGmDJIBhc0XBKk62RRy_Ss-IUR30pOfrqWH6LGt3IXbfjoS6GRQ/exec';
+const API = 'https://script.google.com/macros/s/AKfycbz31utH4qHgonG9du6XdiKSk7mHahLS3T-IcZ2WF2bSlOKh0XmqJQ4xmc4bnzF8PhwA/exec';
 
 // ── State ──
 let curYear=2026, curMonth=3;
@@ -425,10 +425,9 @@ async function apiGet(action){
   return await res.json();
 }
 async function apiPost(action, data){
-  const res=await fetch(API,{
-    method:'POST',
-    body:JSON.stringify({action,data})
-  });
+  // GET 방식으로 저장 (CORS 우회)
+  const encoded = encodeURIComponent(JSON.stringify(data));
+  const res = await fetch(API + '?action=' + action + '&data=' + encoded);
   return await res.json();
 }
 
