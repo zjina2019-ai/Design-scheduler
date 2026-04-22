@@ -135,6 +135,7 @@
   .dtag .tgd{width:5px;height:5px;border-radius:50%;}
   .dtag.da .tgd{background:var(--da-color);}
   .dtag.db .tgd{background:var(--db-color);}
+  .dtag.team{background:rgba(232,197,71,.12);color:var(--accent);}
   .sbadge{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:5px;font-size:.67rem;font-weight:700;flex-shrink:0;cursor:pointer;border:1px solid transparent;transition:filter .12s;white-space:nowrap;}
   .sbadge:hover{filter:brightness(1.3);}
   .sp1{background:rgba(255,107,107,.14);color:var(--p1);border-color:rgba(255,107,107,.22);}
@@ -203,6 +204,7 @@
   .dopt.db .odot{background:var(--db-color);}
   .dopt.selected.da{border-color:var(--da-color);}
   .dopt.selected.db{border-color:var(--db-color);}
+  .dopt.selected.team{border-color:var(--accent)!important;}
   .ssel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
   .sopt{padding:9px;border-radius:8px;border:2px solid transparent;cursor:pointer;text-align:center;font-size:.76rem;font-weight:600;transition:all .14s;}
   .sopt.p1{background:rgba(255,107,107,.1);color:var(--p1);}
@@ -329,11 +331,12 @@
 <div class="overlay" id="overlay">
   <div class="modal">
     <h2 id="mTitle">업무 추가</h2>
-    <div class="fg">
+    <div class="fg" id="designerFg">
       <label>담당 디자이너 *</label>
-      <div class="dsel">
+      <div class="dsel" style="grid-template-columns:1fr 1fr 1fr;">
         <div class="dopt da selected" data-val="a" onclick="selDesigner(this)"><span class="odot"></span><span id="mOptA">디자이너 A</span></div>
         <div class="dopt db" data-val="b" onclick="selDesigner(this)"><span class="odot"></span><span id="mOptB">디자이너 B</span></div>
+        <div class="dopt team" data-val="team" onclick="selDesigner(this)" style="background:rgba(232,197,71,.1);color:var(--accent);border:2px solid transparent;">🏢 전체팀</div>
       </div>
     </div>
     <div class="fg">
@@ -617,7 +620,7 @@ function getFiltered(){
   const rs=new Date(rangeStart);rs.setHours(0,0,0,0);
   const rev=new Date(re);rev.setHours(0,0,0,0);
   return tasks.filter(t=>{
-    if(activeTab!=='all'&&t.designer!==activeTab)return false;
+    if(activeTab!=='all'&&t.designer!==activeTab&&t.designer!=='team')return false;
     if(t.dateType==='range'&&t.dateStart&&t.dateEnd){
       const ds=parseD(t.dateStart);ds.setHours(0,0,0,0);
       const de=parseD(t.dateEnd);de.setHours(0,0,0,0);
@@ -639,6 +642,7 @@ function renderTasks(){
   fl.forEach(t=>stats[t.status]=(stats[t.status]||0)+1);
   const ca=fl.filter(t=>t.designer==='a').length;
   const cb=fl.filter(t=>t.designer==='b').length;
+  const cteam=fl.filter(t=>t.designer==='team').length;
   document.getElementById('statsBar').innerHTML=`
     <div class="stat-chip"><div class="sdot" style="background:var(--da-color)"></div>${esc(names.a)} <strong>${ca}</strong></div>
     <div class="stat-chip"><div class="sdot" style="background:var(--db-color)"></div>${esc(names.b)} <strong>${cb}</strong></div>
@@ -647,6 +651,7 @@ function renderTasks(){
     <div class="stat-chip"><div class="sdot" style="background:var(--hold)"></div>보류 <strong>${stats.hold||0}</strong></div>
     <div class="stat-chip"><div class="sdot" style="background:var(--done)"></div>완료 <strong>${stats.done||0}</strong></div>
     <div class="stat-chip"><div class="sdot" style="background:var(--event)"></div>이벤트 <strong>${stats.event||0}</strong></div>
+    ${cteam>0?`<div class="stat-chip"><div class="sdot" style="background:var(--accent)"></div>전체팀 <strong>${cteam}</strong></div>`:''}
   `;
   const list=document.getElementById('taskList');
   if(!fl.length){
@@ -656,8 +661,8 @@ function renderTasks(){
   const sM={p1:{l:'우선순위 1',c:'sp1',i:'🔴'},p2:{l:'우선순위 2',c:'sp2',i:'🟠'},hold:{l:'보류',c:'shold',i:'⏸'},done:{l:'완료',c:'sdone',i:'✅'},event:{l:'이벤트',c:'sevent',i:'🎉'}};
   list.innerHTML=fl.map(t=>{
     const m=sM[t.status]||sM.hold;
-    const dc=t.designer==='a'?'da':'db';
-    const dn=names[t.designer]||'?';
+    const dc=t.designer==='a'?'da':t.designer==='b'?'db':'team';
+    const dn=t.designer==='team'?'🏢 전체팀':names[t.designer]||'?';
     const cmts=t.comments||[];
     const dateHtml=(()=>{
       if(t.dateType==='range'&&t.dateStart&&t.dateEnd){
@@ -748,14 +753,27 @@ function openModal(id){
     document.getElementById('fDate').value=t?(t.date||''):isoD(rangeStart);
   }
   selSt=t?t.status:'p1';
-  selDs=t?t.designer:(activeTab!=='all'?activeTab:'a');
+  selDs=t?t.designer:(activeTab!=='all'&&activeTab!=='all'?activeTab:'a');
+  // 이벤트면 team으로
+  if(selSt==='event'&&(!t||t.designer==='team')) selDs='team';
   document.querySelectorAll('.sopt').forEach(el=>el.classList.toggle('selected',el.dataset.val===selSt));
   document.querySelectorAll('.dopt').forEach(el=>el.classList.toggle('selected',el.dataset.val===selDs));
+  if(selDs==='team'){const t2=document.querySelector('.dopt.team');if(t2)t2.classList.add('selected');}
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('fTitle').focus(),80);
 }
 function closeModal(){document.getElementById('overlay').classList.remove('open');}
-function selStatus(el){document.querySelectorAll('.sopt').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');selSt=el.dataset.val;}
+function selStatus(el){
+  document.querySelectorAll('.sopt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  selSt=el.dataset.val;
+  // 이벤트 선택시 자동으로 전체팀으로 변경
+  if(selSt==='event'){
+    document.querySelectorAll('.dopt').forEach(e=>e.classList.remove('selected'));
+    const teamOpt=document.querySelector('.dopt.team');
+    if(teamOpt){teamOpt.classList.add('selected');selDs='team';}
+  }
+}
 function selDesigner(el){document.querySelectorAll('.dopt').forEach(e=>e.classList.remove('selected'));el.classList.add('selected');selDs=el.dataset.val;}
 
 function saveTask(){
