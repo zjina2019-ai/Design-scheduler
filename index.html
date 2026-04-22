@@ -578,8 +578,12 @@ function addCell(grid,date,other,today,re){
   if(dayTasks.length){
     const dotsEl=document.createElement('div');
     dotsEl.className='cal-dots';
-    if(dayTasks.some(t=>t.designer==='a')){const d=document.createElement('div');d.className='cal-dot da';dotsEl.appendChild(d);}
-    if(dayTasks.some(t=>t.designer==='b')){const d=document.createElement('div');d.className='cal-dot db';dotsEl.appendChild(d);}
+    const hasA=dayTasks.some(t=>t.designer==='a');
+    const hasB=dayTasks.some(t=>t.designer==='b');
+    const hasTeam=dayTasks.some(t=>t.designer==='team');
+    if(hasTeam){const d=document.createElement('div');d.className='cal-dot';d.style.cssText='width:4px;height:4px;border-radius:50%;background:var(--accent);';dotsEl.appendChild(d);}
+    if(hasA){const d=document.createElement('div');d.className='cal-dot da';dotsEl.appendChild(d);}
+    if(hasB){const d=document.createElement('div');d.className='cal-dot db';dotsEl.appendChild(d);}
     el.appendChild(dotsEl);
   }
   const dow=date.getDay();
